@@ -53,6 +53,24 @@ func Run(ctx context.Context) error {
 	return g.Wait()
 }
 
+// 启动服务, 优化过的
+func Server(ctx context.Context, addr string, handler http.Handler) error {
+	s := &http.Server{
+		Addr:    addr,
+		Handler: handler,
+	}
+
+	// 如果 s.Shutdown 执行成功之后，http 这个函数启动的 http server 也会优雅退出
+	go func() {
+		<-ctx.Done()
+		log.Printf("服务退出: %s\n", addr)
+		s.Shutdown(ctx)
+	}()
+
+	return s.ListenAndServe()
+}
+
+/*
 // 启动服务
 func Server(ctx context.Context, addr string, handler http.Handler) error {
 	s := &http.Server{
@@ -74,11 +92,14 @@ func Server(ctx context.Context, addr string, handler http.Handler) error {
 
 	select {
 	case <-ctx.Done(): // 正常关机
+	err := s.Shutdown(ctx)
+		fmt.Printf("Server shutdown with error: %v\n", err)
 		return s.Shutdown(ctx)
 	case err := <-done: // 接收服务器错误
 		return err
 	}
 }
+*/
 
 // 监听系统退出信号
 func Signal(ctx context.Context) error {
