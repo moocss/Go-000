@@ -38,7 +38,7 @@ func Run(ctx context.Context) error {
 	})
 
 	g.Go(func() error {
-		return Server(ctx, "0.0.0.0:8081", router)
+		return Server(ctx, "0.0.0.0:8081", http.DefaultServeMux)
 	})
 
 	g.Go(func() error {
@@ -80,7 +80,7 @@ func Server(ctx context.Context, addr string, handler http.Handler) error {
 	}
 }
 
-// 监听系统信号
+// 监听系统退出信号
 func Signal(ctx context.Context) error {
 	// 等待中断信号来优雅地关闭服务器
 	quit := make(chan os.Signal, 1)

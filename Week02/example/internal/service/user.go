@@ -7,6 +7,7 @@ import (
 
 	"github.com/moocss/example/internal/model"
 	"github.com/moocss/example/internal/repository"
+	"github.com/moocss/example/pkg/errcode"
 )
 
 type UserService interface {
@@ -28,7 +29,7 @@ func (srv *userService) FindByID(ctx context.Context, id int64) (*model.User, er
 
 	// 中间层 service 尽量不处理 dao 的 error, 直接透传到它的最上层.
 	// 对是否有记录进行判断, 根据业务需求, 可进行更多处理
-	if err != nil && errors.Is(err, repository.ErrRecordNotFound) {
+	if err != nil && errors.Is(err, errcode.ErrRecordNotFound) {
 		// ...
 		return nil, err
 	}

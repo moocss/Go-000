@@ -1,1 +1,8 @@
-package pkg
+package errcode
+
+import (
+	"errors"
+)
+
+var ErrRecordNotFound = errors.New("record not found")
+

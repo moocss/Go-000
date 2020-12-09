@@ -3,8 +3,12 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"github.com/moocss/example/internal/model"
+	"fmt"
+
 	"github.com/pkg/errors"
+
+	"github.com/moocss/example/internal/model"
+	"github.com/moocss/example/pkg/errcode"
 )
 
 type UserRepository interface {
@@ -24,8 +28,9 @@ func (r *userRepository) FindByID(ctx context.Context, id int64) (*model.User, e
 	err := r.DB.QueryRow("SELECT id, username, email FROM user WHERE id=?", id).Scan(&user.Id, &user.UserName, &user.Email)
 
 	// 对错误进行包装, 尽量使用通一的错误处理(Sentinel error), 屏蔽掉不同数据库的报错差异性
+	// 这里不只是返回这一种错误, 在上层打日志的时候还要看到底层出的是那种错误, 所以原始的错误信息也需要保留.
 	if err == sql.ErrNoRows {
-		return nil, errors.Wrap(ErrRecordNotFound, "此用户不存在")
+		return nil, errors.Wrap(errcode.ErrRecordNotFound, fmt.Sprintf("此用户不存在, err: %v", err))
 	}
 
 	if err != nil {
