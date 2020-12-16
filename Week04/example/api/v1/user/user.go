@@ -43,7 +43,7 @@ func user(srv service.UserService) http.HandlerFunc {
 	}
 }
 
-func NewUserHandler(r *http.ServeMux, srv service.UserService)  {
+func NewUserHandler(r *http.ServeMux, srv service.UserService) http.Handler {
 	r.Handle("/", http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "okay")
@@ -52,4 +52,6 @@ func NewUserHandler(r *http.ServeMux, srv service.UserService)  {
 
 	// GET /user/1
 	r.HandleFunc("/user/", user(srv))
+
+	return r
 }

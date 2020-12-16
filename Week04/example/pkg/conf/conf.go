@@ -14,7 +14,7 @@ type Conf struct {
 	viper *viper.Viper
 }
 
-func NewConfig(path string) (*Conf, error) {
+func NewConfig(path string) *Conf {
 	v := viper.New()
 	v.SetConfigFile(path)
 
@@ -24,21 +24,13 @@ func NewConfig(path string) (*Conf, error) {
 	// viper 解析配置文件
 	if err := v.ReadInConfig(); err != nil {
 		log.Printf("Using config file: %s [%s]\n", v.ConfigFileUsed(), err)
-		return nil, err
+		return nil
 	}
 
 	// 读取匹配的环境变量
 	v.AutomaticEnv()
 
-	return &Conf{v}, nil
-}
-
-func LoadConfig(path string) (*Conf, error) {
-	config, err := NewConfig(path)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to load configurations.")
-	}
-	return config, nil
+	return &Conf{v}
 }
 
 // WatchConfig 监控配置文件变化并热加载程序

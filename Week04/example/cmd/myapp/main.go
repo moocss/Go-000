@@ -3,48 +3,46 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/moocss/example/api/v1/user"
-	"github.com/moocss/example/internal/repository"
-	"github.com/moocss/example/internal/service"
-	"github.com/moocss/example/pkg/conf"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/moocss/example/api/v1/user"
 	"github.com/moocss/example/cmd/server/grpc"
 	xhttp "github.com/moocss/example/cmd/server/http"
 	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-    // 初始化配置文件
-	config, err := conf.LoadConfig("./../../config/config.yaml")
-    if err != nil {
-    	log.Fatal("配置文件读取失败")
+	/*
+	// 初始化配置文件
+	config := conf.NewConfig("./../../config/config.yaml")
+	if config == nil {
+		log.Fatal("配置文件读取失败")
 	}
 
-	mysqlDsn := config.Get("DB_DEFAULT_DSN")
-
 	// 连接数据库
-	sql, err := repository.NewDB(mysqlDsn)
-	if err != nil {
+	db := repository.NewDB(config)
+	defer db.DB.Close()
+	if db == nil {
 		// 数据库无法连接直接panic
-		log.Panicf("数据库连接失败: %s", err.Error())
+		log.Panicf("数据库连接失败")
 	}
 
 	log.Println("数据库连接成功")
 
-	defer sql.Close()
-
 	// 初始化 repositorys 和 services
-	userRepo := repository.NewUserRepository(sql)
+	userRepo := repository.NewUserRepository(db)
 	userSrv := service.NewUserService(userRepo)
+    */
+
+	srv := InitializeApp("./../../config/config.yaml")
 
 	// 注册路由
 	r := http.NewServeMux()
-	user.NewUserHandler(r, userSrv)
+	user.NewUserHandler(r, srv)
 
 	// run server
 	if err := Run(context.Background(), r); err != nil {
