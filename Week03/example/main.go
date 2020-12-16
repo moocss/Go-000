@@ -1,6 +1,5 @@
 package main
 
-/*
 import (
 	"context"
 	"encoding/json"
@@ -34,18 +33,18 @@ func Run(ctx context.Context) error {
 	router := registerRoutes()
 
 	// ...
-	g, ectx := errgroup.WithContext(ctx)
+	g, c := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return Server(ectx, "0.0.0.0:8080", router)
+		return Server(c, "0.0.0.0:8080", router)
 	})
 
 	g.Go(func() error {
-		return Server(ectx, "0.0.0.0:8081", http.DefaultServeMux)
+		return Server(c, "0.0.0.0:8081", http.DefaultServeMux)
 	})
 
 	g.Go(func() error {
-		return Signal(ectx)
+		return Signal(c)
 	})
 
 	// inject error
@@ -69,7 +68,7 @@ func Server(ctx context.Context, addr string, handler http.Handler) error {
 	fmt.Println("http")
 	// 如果 s.Shutdown 执行成功之后，http 这个函数启动的 http server 也会优雅退出
 	go func() {
-		<-ctx.Done() //等待 stop 信号
+		<-ctx.Done() // 等待 stop 信号
 		fmt.Println("http ctx done")
 		log.Printf("服务退出: %s\n", addr)
 		s.Shutdown(context.TODO()) // 如果是 s.Shutdown(ctx), 有陷阱,shutdown没执行完, main goroutine就退出了.
@@ -117,4 +116,3 @@ func registerRoutes() http.Handler {
 
 	return router
 }
-*/

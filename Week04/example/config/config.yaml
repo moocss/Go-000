@@ -1,0 +1,5 @@
+# DB 配置
+DB_DEFAULT_DSN: "root:root@tcp(127.0.0.1:3306)/test?parseTime=true&loc=Local"
+
+# Redis 配置
+REDIS_DEFAULT_HOST: "127.0.0.1:6379"
