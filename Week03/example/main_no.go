@@ -1,19 +1,6 @@
 package main
 
 /*
-import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"golang.org/x/sync/errgroup"
-)
-
 func main() {
 	ctx := context.Background()
 	if err := Run(ctx); err != nil {
@@ -34,45 +21,40 @@ func Run(ctx context.Context) error {
 	router := registerRoutes()
 
 	// ...
-	g, ectx := errgroup.WithContext(ctx)
+	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return Server(ectx, "0.0.0.0:8080", router)
+		return Server(ctx, "0.0.0.0:8080", router)
 	})
 
 	g.Go(func() error {
-		return Server(ectx, "0.0.0.0:8081", http.DefaultServeMux)
+		return Server(ctx, "0.0.0.0:8081", http.DefaultServeMux)
 	})
 
 	g.Go(func() error {
-		return Signal(ectx)
+		return Signal(ctx)
 	})
 
-	// inject error
-	//g.Go(func() error {
-	//	fmt.Println("inject")
-	//	time.Sleep(5 * time.Second)
-	//	fmt.Println("inject finish")
-	//	return errors.New("inject error")
-	//})
+	g.Go(func() error {
+		<-ctx.Done()
+		return ctx.Err()
+	})
 
 	return g.Wait()
 }
 
-// 启动服务
+// 启动服务, 优化过的
 func Server(ctx context.Context, addr string, handler http.Handler) error {
 	s := &http.Server{
 		Addr:    addr,
 		Handler: handler,
 	}
 
-	fmt.Println("http")
 	// 如果 s.Shutdown 执行成功之后，http 这个函数启动的 http server 也会优雅退出
 	go func() {
-		<-ctx.Done() //等待 stop 信号
-		fmt.Println("http ctx done")
-		log.Printf("服务退出: %s\n", addr)
-		s.Shutdown(context.TODO()) // 如果是 s.Shutdown(ctx), 有陷阱,shutdown没执行完, main goroutine就退出了.
+		<-ctx.Done()
+		log.Printf("服务退出: %s %s\n", addr)
+		s.Shutdown(ctx)
 	}()
 
 	return s.ListenAndServe()
@@ -80,26 +62,22 @@ func Server(ctx context.Context, addr string, handler http.Handler) error {
 
 // 监听系统退出信号
 func Signal(ctx context.Context) error {
-	exitSignals := []os.Signal{os.Interrupt, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGINT} // SIGTERM is POSIX specific
 	// 等待中断信号来优雅地关闭服务器
-	quit := make(chan os.Signal, len(exitSignals))
+	quit := make(chan os.Signal, 1)
 	// kill 默认会发送 syscall.SIGTERM 信号
 	// kill -2 发送 syscall.SIGINT 信号，我们常用的Ctrl+C就是触发系统SIGINT信号
 	// kill -9 发送 syscall.SIGKILL 信号，但是不能被捕获，所以不需要添加它
 	// signal.Notify把收到的 syscall.SIGINT或syscall.SIGTERM 信号转发给quit
-	signal.Notify(quit, exitSignals...)
-	for {
-		fmt.Println("signal")
-		select {
-		case <-ctx.Done():
-			fmt.Println("signal ctx done")
-			return ctx.Err()
-		case q := <-quit:
-			fmt.Println("quit")
-			return fmt.Errorf("收到的退出信号是: %v", q.String())
-		}
-	}
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(quit)
 
+	select {
+	case <-ctx.Done():
+		signal.Reset()
+		return nil
+	case q := <-quit:
+		return fmt.Errorf("收到的退出信号是: %v", q.String())
+	}
 }
 
 // registerRoutes ...
